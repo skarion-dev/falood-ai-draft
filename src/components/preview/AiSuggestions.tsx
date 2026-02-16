@@ -166,7 +166,7 @@ export const AiSuggestions: React.FC = () => {
                 content: m.content
             }));
 
-            const response = await fetch('http://localhost:5000/api/suggestions', {
+            const response = await fetch('/api/suggestions', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
