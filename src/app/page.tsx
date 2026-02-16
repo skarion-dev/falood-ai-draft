@@ -6,7 +6,8 @@ import { ResumeForm } from '@/components/form/ResumeForm';
 import { ResumePreview } from '@/components/preview/ResumePreview';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Download, Eye, EyeOff, Palette, Settings, AlertTriangle, Upload, FileDown } from 'lucide-react';
+import { Download, Eye, EyeOff, Palette, Settings, AlertTriangle, Upload, FileDown, Sparkles } from 'lucide-react';
+import { AiSuggestions } from '@/components/preview/AiSuggestions';
 import { cn } from '@/lib/utils';
 import { useResume } from '@/contexts/ResumeContext';
 import { exportResumeAsJSON, importResumeFromJSON } from '@/utils/resumeImportExport';
@@ -14,6 +15,7 @@ import { useToast } from '@/components/ui/use-toast';
 
 const ResumeContent: React.FC = () => {
     const [showPreview, setShowPreview] = useState(true);
+    const [showAiPanel, setShowAiPanel] = useState(true);
     const [activePanel, setActivePanel] = useState<'form' | 'customize' | 'settings'>('form');
     const [pageOverflow, setPageOverflow] = useState(false);
     const { state, exportResumeData, importResumeData } = useResume();
@@ -110,10 +112,23 @@ const ResumeContent: React.FC = () => {
                     </Button>
                 </div>
 
-                <div className="flex flex-col lg:flex-row gap-6 max-w-[1600px] mx-auto">
+                {/* Desktop toggle buttons */}
+                <div className="hidden xl:flex justify-end mb-4 gap-2 print:hidden">
+                    <Button
+                        variant={showAiPanel ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setShowAiPanel(!showAiPanel)}
+                        className="flex items-center gap-2"
+                    >
+                        <Sparkles className="w-4 h-4" />
+                        {showAiPanel ? 'Hide AI Assistant' : 'Show AI Assistant'}
+                    </Button>
+                </div>
+
+                <div className="flex flex-col xl:flex-row gap-6 max-w-[1800px] mx-auto">
                     {/* Form Panel */}
                     <div className={cn(
-                        "w-full lg:w-[600px] h-[750px] bg-card rounded-xl shadow-lg overflow-hidden flex flex-col print:hidden",
+                        "w-full lg:w-[600px] xl:w-[500px] h-[750px] bg-card rounded-xl shadow-lg overflow-hidden flex flex-col print:hidden",
                         "lg:block",
                         showPreview ? "hidden lg:flex" : "flex"
                     )}>
@@ -155,12 +170,12 @@ const ResumeContent: React.FC = () => {
 
                     {/* Preview Panel */}
                     <div className={cn(
-                        "w-full lg:w-[900px] h-[750px] bg-card rounded-xl shadow-lg overflow-hidden flex flex-col print:w-full print:h-auto print:shadow-none print:rounded-none print:block print:overflow-visible",
+                        "w-full lg:w-auto xl:flex-1 h-[750px] bg-card rounded-xl shadow-lg overflow-hidden flex flex-col print:w-full print:h-auto print:shadow-none print:rounded-none print:block print:overflow-visible",
                         "lg:flex",
                         showPreview ? "flex" : "hidden lg:flex"
                     )}>
                         <div className="border-b border-border p-4 flex items-center justify-between flex-shrink-0 print:hidden">
-                            <h2 className="text-lg font-semibold">Live Preview</h2>
+                            <div></div>
                             <div className="flex items-center gap-3">
                                 <Button
                                     size="sm"
@@ -205,6 +220,18 @@ const ResumeContent: React.FC = () => {
                             <ResumePreview />
                         </div>
                     </div>
+
+                    {/* AI Suggestions Panel */}
+                    {showAiPanel && (
+                        <div className={cn(
+                            "w-full xl:w-[400px] h-[750px] bg-card rounded-xl shadow-lg overflow-hidden flex flex-col print:hidden",
+                            "hidden xl:flex"
+                        )}>
+                            <div className="flex-1 overflow-hidden p-2">
+                                <AiSuggestions />
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

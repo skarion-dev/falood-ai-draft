@@ -10,7 +10,7 @@ export const BusinessProfessionalTemplate: React.FC<TemplateProps> = ({ data }) 
   const { personalInfo, summary, experience, education, projects, skills, customSections, sections, colors, fontSize, fontFamily } = data;
 
   const visibleSections = sections.filter(s => s.visible).sort((a, b) => a.order - b.order);
-  
+
   const formatDate = (dateStr: string | undefined) => {
     if (!dateStr) return '';
     const date = new Date(dateStr + '-01');
@@ -18,7 +18,7 @@ export const BusinessProfessionalTemplate: React.FC<TemplateProps> = ({ data }) 
   };
 
   const formatBulletPoints = (content: string) => {
-    return content.split('\n').filter(line => line.trim()).map(line => 
+    return content.split('\n').filter(line => line.trim()).map(line =>
       line.trim().replace(/^[•\-\*]\s*/, '')
     );
   };
@@ -32,29 +32,29 @@ export const BusinessProfessionalTemplate: React.FC<TemplateProps> = ({ data }) 
   };
 
   return (
-    <div 
+    <div
       className={`w-full h-full leading-relaxed ${getFontSizeClass()}`}
-      style={{ 
-        color: colors.text, 
+      style={{
+        color: colors.text,
         fontFamily: fontFamily || 'Georgia, serif',
         pageBreakInside: 'avoid'
       }}
     >
       {/* Header */}
       <div className="text-center mb-4 pb-4" style={{ borderColor: colors.primary }}>
-        <h1 
+        <h1
           className="text-2xl font-bold mb-2"
           style={{ color: colors.primary }}
         >
           {personalInfo.fullName || 'Your Name'}
         </h1>
-        <h2 
+        <h2
           className="text-lg mb-3"
           style={{ color: colors.secondary }}
         >
           {personalInfo.jobTitle || 'Your Job Title'}
         </h2>
-        
+
         {/* Contact Info */}
         <div className="flex justify-center flex-wrap gap-x-4 gap-y-1 text-xs">
           {personalInfo.email && (
@@ -82,7 +82,7 @@ export const BusinessProfessionalTemplate: React.FC<TemplateProps> = ({ data }) 
             </div>
           )}
         </div>
-        
+
         {/* Links
         {(personalInfo.website || personalInfo.linkedin || personalInfo.github) && (
           <div className="flex justify-center flex-wrap gap-x-4 gap-y-1 text-xs mt-1">
@@ -114,7 +114,7 @@ export const BusinessProfessionalTemplate: React.FC<TemplateProps> = ({ data }) 
           <div key={section.id} className="page-break-inside-avoid">
             {section.id === 'summary' && summary && (
               <div>
-                <h3 
+                <h3
                   className="text-sm font-bold mb-2 pb-1 border-b uppercase tracking-wide"
                   style={{ color: colors.primary, borderColor: colors.primary }}
                 >
@@ -126,7 +126,7 @@ export const BusinessProfessionalTemplate: React.FC<TemplateProps> = ({ data }) 
 
             {section.id === 'experience' && experience.length > 0 && (
               <div>
-                <h3 
+                <h3
                   className="text-sm font-bold mb-3 pb-1 border-b uppercase tracking-wide"
                   style={{ color: colors.primary, borderColor: colors.primary }}
                 >
@@ -138,14 +138,14 @@ export const BusinessProfessionalTemplate: React.FC<TemplateProps> = ({ data }) 
                       <div className="flex justify-between items-start mb-1">
                         <div>
                           <h4 className="text-xs font-bold">{exp.jobTitle}</h4>
-                          <div 
+                          <div
                             className="text-xs font-semibold"
                             style={{ color: colors.secondary }}
                           >
                             {exp.company} {exp.location && `• ${exp.location}`}
                           </div>
                         </div>
-                        <span 
+                        <span
                           className="text-xs font-medium"
                           style={{ color: colors.secondary }}
                         >
@@ -172,7 +172,7 @@ export const BusinessProfessionalTemplate: React.FC<TemplateProps> = ({ data }) 
 
             {section.id === 'education' && education.length > 0 && (
               <div>
-                <h3 
+                <h3
                   className="text-sm font-bold mb-3 pb-1 border-b uppercase tracking-wide"
                   style={{ color: colors.primary, borderColor: colors.primary }}
                 >
@@ -184,7 +184,7 @@ export const BusinessProfessionalTemplate: React.FC<TemplateProps> = ({ data }) 
                       <div className="flex justify-between items-start">
                         <div>
                           <h4 className="text-xs font-bold">{edu.degree}</h4>
-                          <div 
+                          <div
                             className="text-xs font-semibold"
                             style={{ color: colors.secondary }}
                           >
@@ -195,7 +195,7 @@ export const BusinessProfessionalTemplate: React.FC<TemplateProps> = ({ data }) 
                           )}
                         </div>
                         <div className="text-right">
-                          <div 
+                          <div
                             className="text-xs font-medium"
                             style={{ color: colors.secondary }}
                           >
@@ -214,7 +214,7 @@ export const BusinessProfessionalTemplate: React.FC<TemplateProps> = ({ data }) 
 
             {section.id === 'projects' && projects.length > 0 && (
               <div>
-                <h3 
+                <h3
                   className="text-sm font-bold mb-3 pb-1 border-b uppercase tracking-wide"
                   style={{ color: colors.primary, borderColor: colors.primary }}
                 >
@@ -226,7 +226,7 @@ export const BusinessProfessionalTemplate: React.FC<TemplateProps> = ({ data }) 
                       <div className="flex justify-between items-start mb-1">
                         <h4 className="text-xs font-bold">{project.title}</h4>
                         {(project.startDate || project.endDate) && (
-                          <span 
+                          <span
                             className="text-xs font-medium"
                             style={{ color: colors.secondary }}
                           >
@@ -254,11 +254,11 @@ export const BusinessProfessionalTemplate: React.FC<TemplateProps> = ({ data }) 
 
             {section.id === 'skills' && skills && (
               <div>
-                <h3 
+                <h3
                   className="text-sm font-bold mb-2 pb-1 border-b uppercase tracking-wide"
                   style={{ color: colors.primary, borderColor: colors.primary }}
                 >
-                  Core Competencies
+                  Technical Skills
                 </h3>
                 {skills.mode === 'simple' ? (
                   <div className="text-xs">
@@ -268,7 +268,7 @@ export const BusinessProfessionalTemplate: React.FC<TemplateProps> = ({ data }) 
                   <div className="space-y-2">
                     {skills.categorized.map((category) => (
                       <div key={category.id} className="text-xs">
-                        <strong 
+                        <strong
                           style={{ color: colors.secondary }}
                         >
                           {category.name}:
@@ -284,7 +284,7 @@ export const BusinessProfessionalTemplate: React.FC<TemplateProps> = ({ data }) 
               <div className="space-y-4">
                 {customSections.filter(cs => cs.visible).map((customSection) => (
                   <div key={customSection.id}>
-                    <h3 
+                    <h3
                       className="text-sm font-bold mb-2 pb-1 border-b uppercase tracking-wide"
                       style={{ color: colors.primary, borderColor: colors.primary }}
                     >
