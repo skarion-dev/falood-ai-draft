@@ -6,22 +6,55 @@ import { ResumeForm } from '@/components/form/ResumeForm';
 import { ResumePreview } from '@/components/preview/ResumePreview';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Download, Eye, EyeOff, Palette, Settings, AlertTriangle, Upload, FileDown, Sparkles } from 'lucide-react';
+import { Download, Eye, EyeOff, Palette, Settings, AlertTriangle, Upload, FileDown, Sparkles, Save } from 'lucide-react';
 import { AiSuggestions } from '@/components/preview/AiSuggestions';
 import { cn } from '@/lib/utils';
 import { useResume } from '@/contexts/ResumeContext';
 import { exportResumeAsJSON, importResumeFromJSON } from '@/utils/resumeImportExport';
 import { useToast } from '@/components/ui/use-toast';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Suspense, useEffect } from 'react';
 
 const ResumeContent: React.FC = () => {
     const [showPreview, setShowPreview] = useState(true);
     const [showAiPanel, setShowAiPanel] = useState(true);
     const [activePanel, setActivePanel] = useState<'form' | 'customize' | 'settings'>('form');
     const [pageOverflow, setPageOverflow] = useState(false);
-    const { state, exportResumeData, importResumeData } = useResume();
+    const { state, exportResumeData, importResumeData, setChatHistory, setJobDescription } = useResume();
     const resumeRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { toast } = useToast();
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const [isSaving, setIsSaving] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+
+    useEffect(() => {
+        const id = searchParams.get('id');
+        if (id) {
+            const fetchApplication = async () => {
+                setIsLoading(true);
+                try {
+                    const response = await fetch(`/api/db/applications/${id}`);
+                    const json = await response.json();
+                    if (json.success && json.data) {
+                        importResumeData(json.data.resumeData);
+                        setChatHistory(json.data.chatHistory);
+                        setJobDescription(json.data.jobDescription || '');
+                        toast({
+                            title: "Application Loaded",
+                            description: "Content restored from dashboard.",
+                        });
+                    }
+                } catch (error) {
+                    console.error("Error fetching application", error);
+                } finally {
+                    setIsLoading(false);
+                }
+            };
+            fetchApplication();
+        }
+    }, [searchParams]);
 
     React.useEffect(() => {
         const checkOverflow = () => {
@@ -54,6 +87,61 @@ const ResumeContent: React.FC = () => {
                 description: "There was an error exporting your resume.",
                 variant: "destructive",
             });
+        }
+    };
+
+    const handleSaveToDashboard = async () => {
+        setIsSaving(true);
+        try {
+            let extractedSkills: string[] = [];
+            let extractedCompany: string | null = null;
+            if (state.jobDescription) {
+                try {
+                    const skillsResponse = await fetch('/api/extract-skills', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ jobDescription: state.jobDescription }),
+                    });
+                    if (skillsResponse.ok) {
+                        const skillsData = await skillsResponse.json();
+                        extractedSkills = skillsData.skills || [];
+                        extractedCompany = skillsData.companyName || null;
+                    }
+                } catch (err) {
+                    console.error("Failed to extract skills", err);
+                }
+            }
+
+            const saveResponse = await fetch('/api/db/applications', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    jobDescription: state.jobDescription,
+                    companyName: extractedCompany,
+                    skills: extractedSkills,
+                    resumeData: state.resumeData,
+                    chatHistory: state.chatHistory,
+                }),
+            });
+
+            if (saveResponse.ok) {
+                toast({
+                    title: "Application Saved",
+                    description: "Successfully saved to your dashboard.",
+                });
+                router.push('/dashboard');
+            } else {
+                throw new Error("Failed to save applications");
+            }
+        } catch (error) {
+            console.error('Error saving:', error);
+            toast({
+                title: "Save Failed",
+                description: "There was an error saving your application.",
+                variant: "destructive",
+            });
+        } finally {
+            setIsSaving(false);
         }
     };
 
@@ -181,6 +269,16 @@ const ResumeContent: React.FC = () => {
                                     size="sm"
                                     variant="outline"
                                     className="flex items-center gap-2 px-3 py-2"
+                                    onClick={handleSaveToDashboard}
+                                    disabled={isSaving}
+                                >
+                                    <Save className="w-4 h-4" />
+                                    {isSaving ? 'Saving...' : 'Save to Dashboard'}
+                                </Button>
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="flex items-center gap-2 px-3 py-2"
                                     onClick={handleImportJSON}
                                 >
                                     <Upload className="w-4 h-4" />
@@ -241,7 +339,9 @@ const ResumeContent: React.FC = () => {
 export default function ResumeMaker() {
     return (
         <ResumeProvider>
-            <ResumeContent />
+            <Suspense fallback={<div className="flex items-center justify-center h-screen">Loading...</div>}>
+                <ResumeContent />
+            </Suspense>
         </ResumeProvider>
     );
 }

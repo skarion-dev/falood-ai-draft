@@ -35,14 +35,8 @@ interface ChatMessage {
 }
 
 export const AiSuggestions: React.FC = () => {
-    const { state, updateExperience, updateSkills, updateSummary } = useResume();
-    const [messages, setMessages] = useState<ChatMessage[]>([
-        {
-            id: 'welcome',
-            role: 'assistant',
-            content: 'Hi! Paste a job description (JD) here, and I will suggest tailored changes for your resume.'
-        }
-    ]);
+    const { state, updateExperience, updateSkills, updateSummary, setChatHistory, setJobDescription } = useResume();
+    const { chatHistory: messages, jobDescription } = state;
     const [input, setInput] = useState('');
     const [isTyping, setIsTyping] = useState(false);
 
@@ -115,11 +109,11 @@ export const AiSuggestions: React.FC = () => {
         }
 
         // Mark as accepted in the message history
-        setMessages(prev => prev.map(msg => {
+        setChatHistory(messages.map(msg => {
             if (msg.id === messageId && msg.suggestions) {
                 return {
                     ...msg,
-                    suggestions: msg.suggestions.map(s =>
+                    suggestions: msg.suggestions.map((s: Suggestion) =>
                         s.id === suggestion.id ? { ...s, status: 'accepted' } : s
                     )
                 };
@@ -130,11 +124,11 @@ export const AiSuggestions: React.FC = () => {
 
     const handleReject = (suggestionId: string, messageId: string) => {
         // Mark as rejected in the message history
-        setMessages(prev => prev.map(msg => {
+        setChatHistory(messages.map(msg => {
             if (msg.id === messageId && msg.suggestions) {
                 return {
                     ...msg,
-                    suggestions: msg.suggestions.map(s =>
+                    suggestions: msg.suggestions.map((s: Suggestion) =>
                         s.id === suggestionId ? { ...s, status: 'rejected' } : s
                     )
                 };
@@ -153,9 +147,16 @@ export const AiSuggestions: React.FC = () => {
         };
 
         const newMessages = [...messages, userMsg];
-        setMessages(newMessages);
+        setChatHistory(newMessages);
 
         const currentInput = input;
+
+        // Very basic heuristic: if input looks like a JD (e.g., long text, has words like "requirements", "skills", "experience")
+        // or just store it if it's the first long message
+        if (currentInput.length > 100 && !state.jobDescription) {
+            setJobDescription(currentInput);
+        }
+
         setInput('');
         setIsTyping(true);
 
@@ -173,7 +174,7 @@ export const AiSuggestions: React.FC = () => {
                 },
                 body: JSON.stringify({
                     resume: state.resumeData,
-                    jobDescription: currentInput, // Still sending specific JD if needed, but messages have context
+                    jobDescription: currentInput || state.jobDescription, // send context
                     messages: apiMessages
                 }),
             });
@@ -194,7 +195,7 @@ export const AiSuggestions: React.FC = () => {
                 suggestions: newSuggestions.map(s => ({ ...s, status: 'pending' }))
             };
 
-            setMessages(prev => [...prev, aiMsg]);
+            setChatHistory([...newMessages, aiMsg]);
         } catch (error) {
             console.error('Error fetching suggestions:', error);
             const errorMsg: ChatMessage = {
@@ -202,7 +203,7 @@ export const AiSuggestions: React.FC = () => {
                 role: 'assistant',
                 content: 'Sorry, I encountered an error. Please ensure the backend server is running.'
             };
-            setMessages(prev => [...prev, errorMsg]);
+            setChatHistory([...newMessages, errorMsg]);
         } finally {
             setIsTyping(false);
         }
@@ -240,7 +241,7 @@ export const AiSuggestions: React.FC = () => {
                                     {/* Render Suggestions embedded in the message */}
                                     {msg.suggestions && msg.suggestions.length > 0 && (
                                         <div className="flex flex-col gap-2 mt-1">
-                                            {msg.suggestions.map((suggestion) => (
+                                            {msg.suggestions.map((suggestion: Suggestion) => (
                                                 <Card key={suggestion.id} className={cn(
                                                     "border shadow-sm overflow-hidden transition-all",
                                                     suggestion.status === 'accepted' ? "opacity-50 bg-green-50/30 border-green-200" :
@@ -302,7 +303,7 @@ export const AiSuggestions: React.FC = () => {
                                                                     if (Array.isArray(suggestion.suggested)) {
                                                                         return (
                                                                             <div className="flex flex-col gap-1">
-                                                                                {suggestion.suggested.map((s, i) => renderContent(s, i))}
+                                                                                {suggestion.suggested.map((s: any, i: number) => renderContent(s, i))}
                                                                             </div>
                                                                         );
                                                                     } else {

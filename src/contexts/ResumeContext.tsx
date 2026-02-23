@@ -5,6 +5,8 @@ interface ResumeState {
   resumeData: ResumeData;
   isEditing: boolean;
   selectedSection: string | null;
+  chatHistory: any[];
+  jobDescription: string;
 }
 
 type ResumeAction =
@@ -24,7 +26,9 @@ type ResumeAction =
   | { type: 'SET_EDITING'; payload: boolean }
   | { type: 'SET_SELECTED_SECTION'; payload: string | null }
   | { type: 'RESET_RESUME' }
-  | { type: 'IMPORT_RESUME_DATA'; payload: ResumeData };
+  | { type: 'IMPORT_RESUME_DATA'; payload: ResumeData }
+  | { type: 'SET_CHAT_HISTORY'; payload: any[] }
+  | { type: 'SET_JOB_DESCRIPTION'; payload: string };
 
 const initialResumeData: ResumeData = {
   personalInfo: {
@@ -60,7 +64,15 @@ const initialResumeData: ResumeData = {
 const initialState: ResumeState = {
   resumeData: initialResumeData,
   isEditing: false,
-  selectedSection: null
+  selectedSection: null,
+  chatHistory: [
+    {
+      id: 'welcome',
+      role: 'assistant',
+      content: 'Hi! Paste a job description (JD) here, and I will suggest tailored changes for your resume.'
+    }
+  ],
+  jobDescription: '',
 };
 
 function resumeReducer(state: ResumeState, action: ResumeAction): ResumeState {
@@ -141,6 +153,10 @@ function resumeReducer(state: ResumeState, action: ResumeAction): ResumeState {
       return { ...initialState, resumeData: initialResumeData };
     case 'IMPORT_RESUME_DATA':
       return { ...state, resumeData: action.payload };
+    case 'SET_CHAT_HISTORY':
+      return { ...state, chatHistory: action.payload };
+    case 'SET_JOB_DESCRIPTION':
+      return { ...state, jobDescription: action.payload };
     default:
       return state;
   }
@@ -167,6 +183,8 @@ interface ResumeContextType {
   resetResume: () => void;
   importResumeData: (data: ResumeData) => void;
   exportResumeData: () => ResumeData;
+  setChatHistory: (history: any[]) => void;
+  setJobDescription: (jd: string) => void;
 }
 
 const ResumeContext = createContext<ResumeContextType | undefined>(undefined);
@@ -246,6 +264,14 @@ export const ResumeProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     return state.resumeData;
   };
 
+  const setChatHistory = (history: any[]) => {
+    dispatch({ type: 'SET_CHAT_HISTORY', payload: history });
+  };
+
+  const setJobDescription = (jd: string) => {
+    dispatch({ type: 'SET_JOB_DESCRIPTION', payload: jd });
+  };
+
   const value: ResumeContextType = {
     state,
     dispatch,
@@ -266,7 +292,9 @@ export const ResumeProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     setSelectedSection,
     resetResume,
     importResumeData,
-    exportResumeData
+    exportResumeData,
+    setChatHistory,
+    setJobDescription
   };
 
   return (
