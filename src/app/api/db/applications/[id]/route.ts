@@ -1,33 +1,36 @@
 import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
-import { Pool } from 'pg';
+import { Client } from 'pg';
 import { PrismaPg } from '@prisma/adapter-pg';
 
 export const dynamic = 'force-dynamic';
 
-function getPrismaClient() {
+async function withPrisma<T>(fn: (prisma: PrismaClient) => Promise<T>): Promise<T> {
     const connectionString = process.env.DATABASE_URL;
     if (!connectionString) {
         throw new Error("DATABASE_URL must be set in your .env file.");
     }
-    const pool = new Pool({ connectionString });
-    const adapter = new PrismaPg(pool);
-    return new PrismaClient({ adapter });
+    const client = new Client({ connectionString });
+    await client.connect();
+    const adapter = new PrismaPg(client as any);
+    const prisma = new PrismaClient({ adapter });
+    try {
+        return await fn(prisma);
+    } finally {
+        await client.end();
+    }
 }
 
 export async function GET(
     request: Request,
     { params }: { params: Promise<{ id: string }> }
 ) {
-    const prisma = getPrismaClient();
     try {
         const { id } = await params;
 
-        const application = await prisma.savedApplication.findUnique({
-            where: {
-                id,
-            },
-        });
+        const application = await withPrisma(prisma =>
+            prisma.savedApplication.findUnique({ where: { id } })
+        );
 
         if (!application) {
             return NextResponse.json(
@@ -50,15 +53,12 @@ export async function DELETE(
     request: Request,
     { params }: { params: Promise<{ id: string }> }
 ) {
-    const prisma = getPrismaClient();
     try {
         const { id } = await params;
 
-        await prisma.savedApplication.delete({
-            where: {
-                id,
-            },
-        });
+        await withPrisma(prisma =>
+            prisma.savedApplication.delete({ where: { id } })
+        );
 
         return NextResponse.json({ success: true });
     } catch (error: any) {
