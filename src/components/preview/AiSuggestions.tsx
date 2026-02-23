@@ -274,12 +274,40 @@ export const AiSuggestions: React.FC = () => {
                                                             <span className="text-[10px] uppercase font-semibold text-muted-foreground">Suggested Change</span>
                                                             <div className="p-2 bg-green-50/80 dark:bg-green-950/20 rounded font-medium border border-green-100/50 dark:border-green-900/20 text-[11px] leading-relaxed text-foreground">
                                                                 {(() => {
+                                                                    const parseSuggested = (raw: any): any => {
+                                                                        // If it's a string that looks like JSON, parse it
+                                                                        if (typeof raw === 'string') {
+                                                                            try {
+                                                                                return JSON.parse(raw);
+                                                                            } catch {
+                                                                                return raw; // plain string
+                                                                            }
+                                                                        }
+                                                                        return raw;
+                                                                    };
+
                                                                     const renderContent = (s: any, idx: number) => {
+                                                                        // Unwrap {categorized, simple, mode} shape from skill_reorg
+                                                                        if (s && typeof s === 'object' && 'categorized' in s && Array.isArray(s.categorized)) {
+                                                                            return (
+                                                                                <div key={idx} className="flex flex-col gap-2">
+                                                                                    {s.categorized.map((cat: any, k: number) => (
+                                                                                        <div key={k} className="flex flex-col gap-1">
+                                                                                            <span className="text-[10px] font-bold text-emerald-800 dark:text-emerald-300 uppercase tracking-wider">{cat.name}</span>
+                                                                                            <div className="flex flex-wrap gap-1">
+                                                                                                {cat.skills?.map((skill: string, sk: number) => (
+                                                                                                    <Badge key={sk} variant="secondary" className="bg-background text-[10px] h-5 px-1.5 font-normal border shadow-sm">{skill}</Badge>
+                                                                                                ))}
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    ))}
+                                                                                </div>
+                                                                            );
+                                                                        }
                                                                         if (typeof s === 'string') {
                                                                             return <Badge key={idx} variant="secondary" className="bg-background text-[10px] h-5 px-1.5 font-normal border shadow-sm">{s}</Badge>;
                                                                         }
                                                                         if (typeof s === 'object' && s !== null) {
-                                                                            // Check if it's a SkillCategory
                                                                             if ('name' in s && 'skills' in s && Array.isArray(s.skills)) {
                                                                                 return (
                                                                                     <div key={idx} className="flex flex-col gap-1 mt-1 mb-1">
@@ -294,20 +322,20 @@ export const AiSuggestions: React.FC = () => {
                                                                                     </div>
                                                                                 );
                                                                             }
-                                                                            // Fallback for other objects (maybe just a "reason" or "description" field slipped in)
-                                                                            return <span key={idx} className="text-xs">{JSON.stringify(s)}</span>;
                                                                         }
                                                                         return null;
                                                                     };
 
-                                                                    if (Array.isArray(suggestion.suggested)) {
+                                                                    const parsed = parseSuggested(suggestion.suggested);
+
+                                                                    if (Array.isArray(parsed)) {
                                                                         return (
                                                                             <div className="flex flex-col gap-1">
-                                                                                {suggestion.suggested.map((s: any, i: number) => renderContent(s, i))}
+                                                                                {parsed.map((s: any, i: number) => renderContent(s, i))}
                                                                             </div>
                                                                         );
                                                                     } else {
-                                                                        return renderContent(suggestion.suggested, 0);
+                                                                        return renderContent(parsed, 0);
                                                                     }
                                                                 })()}
                                                             </div>
