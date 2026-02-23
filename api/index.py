@@ -56,7 +56,7 @@ def get_suggestions():
                 "title": "Short title of suggestion",
                 "description": "Reasoning for the suggestion",
                 "original": "Original text (if applicable)",
-                "suggested": "The new suggested text or list of skills. FOR 'skill_reorg', output MUST be an array of objects: [{'id': 'cat1', 'name': 'Category Name', 'skills': ['Skill 1', 'Skill 2']}]",
+                "suggested": "For text, put the plain string here. For skills, output a JSON ARRAY of strings (e.g. [\"Skill 1\", \"Skill 2\"]). For 'skill_reorg', output an array of objects: [{\"id\": \"cat1\", \"name\": \"Category Name\", \"skills\": [\"Skill 1\"]}]",
                 "targetId": "ID of the experience item (if type is experience) or skill category ID (if type is skill)"
             }
         ]
@@ -99,6 +99,56 @@ def get_suggestions():
         try:
             suggestions_data = json.loads(content)
             return jsonify(suggestions_data)
+        except json.JSONDecodeError:
+            return jsonify({"error": "Failed to parse AI response"}), 500
+
+    except Exception as e:
+        print(f"Error calling OpenAI API: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/extract-skills', methods=['POST'])
+def extract_skills():
+    if not api_key:
+        return jsonify({"error": "OpenAI API key not found. Please set OPENAI_API_KEY in .env file."}), 500
+
+    data = request.json
+    
+    if not data:
+        return jsonify({"error": "No data provided"}), 400
+        
+    job_description = data.get('jobDescription')
+    
+    if not job_description:
+        return jsonify({"error": "Missing job description"}), 400
+
+    system_prompt = """You are an expert at extracting information from job descriptions.
+    Your goal is to extract the explicitly required or preferred skills as an array of concise strings (e.g., "Python", "React"), AND to extract the name of the hiring company. If the company name is not found, return null.
+    
+    Output strictly valid JSON in the following format:
+    {
+        "companyName": "Company Name",
+        "skills": ["Skill 1", "Skill 2"]
+    }
+    """
+
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o",
+            response_format={"type": "json_object"},
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": job_description}
+            ],
+            temperature=0.3
+        )
+
+        content = response.choices[0].message.content
+        if not content:
+             return jsonify({"error": "Empty response from AI"}), 500
+             
+        try:
+            skills_data = json.loads(content)
+            return jsonify(skills_data)
         except json.JSONDecodeError:
             return jsonify({"error": "Failed to parse AI response"}), 500
 

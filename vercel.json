@@ -1,7 +1,11 @@
 {
     "rewrites": [
         {
-            "source": "/api/:path*",
+            "source": "/api/suggestions",
+            "destination": "/api/index.py"
+        },
+        {
+            "source": "/api/extract-skills",
             "destination": "/api/index.py"
         }
     ]
