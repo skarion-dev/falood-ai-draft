@@ -2,11 +2,11 @@
     "rewrites": [
         {
             "source": "/api/suggestions",
-            "destination": "/api/index.py"
+            "destination": "/api/ai.py"
         },
         {
             "source": "/api/extract-skills",
-            "destination": "/api/index.py"
+            "destination": "/api/ai.py"
         }
     ]
 }
