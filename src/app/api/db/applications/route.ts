@@ -48,9 +48,29 @@ export async function POST(request: Request) {
     }
 }
 
-export async function GET() {
+export async function GET(request: Request) {
     const prisma = getPrismaClient();
     try {
+        const { searchParams } = new URL(request.url);
+        const id = searchParams.get('id');
+
+        if (id) {
+            // Fetch single application by ID
+            const application = await prisma.savedApplication.findUnique({
+                where: { id },
+            });
+
+            if (!application) {
+                return NextResponse.json(
+                    { success: false, error: 'Application not found' },
+                    { status: 404 }
+                );
+            }
+
+            return NextResponse.json({ success: true, data: application });
+        }
+
+        // Fetch all applications
         const applications = await prisma.savedApplication.findMany({
             orderBy: { createdAt: 'desc' },
         });
@@ -60,6 +80,35 @@ export async function GET() {
         console.error('Error fetching applications:', error);
         return NextResponse.json(
             { success: false, error: error.message || 'Failed to fetch applications' },
+            { status: 500 }
+        );
+    } finally {
+        await prisma.$disconnect();
+    }
+}
+
+export async function DELETE(request: Request) {
+    const prisma = getPrismaClient();
+    try {
+        const { searchParams } = new URL(request.url);
+        const id = searchParams.get('id');
+
+        if (!id) {
+            return NextResponse.json(
+                { success: false, error: 'Missing application ID' },
+                { status: 400 }
+            );
+        }
+
+        await prisma.savedApplication.delete({
+            where: { id },
+        });
+
+        return NextResponse.json({ success: true });
+    } catch (error: any) {
+        console.error('Error deleting application:', error);
+        return NextResponse.json(
+            { success: false, error: error.message || 'Failed to delete application' },
             { status: 500 }
         );
     } finally {

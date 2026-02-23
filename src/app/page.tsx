@@ -35,7 +35,7 @@ const ResumeContent: React.FC = () => {
             const fetchApplication = async () => {
                 setIsLoading(true);
                 try {
-                    const response = await fetch(`/api/db/applications/${id}`);
+                    const response = await fetch(`/api/db/applications?id=${id}`);
                     const json = await response.json();
                     if (json.success && json.data) {
                         importResumeData(json.data.resumeData);

@@ -34,7 +34,7 @@ export default function DashboardPage() {
         }
 
         try {
-            const res = await fetch(`/api/db/applications/${id}`, {
+            const res = await fetch(`/api/db/applications?id=${id}`, {
                 method: 'DELETE'
             });
             const json = await res.json();
